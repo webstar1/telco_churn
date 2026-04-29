@@ -1,0 +1,45 @@
+prd:
+  catalog_name: mlops_prd
+  schema_name: telco_churn
+acc:
+  catalog_name: mlops_acc
+  schema_name: telco_churn
+dev:
+  catalog_name: mlops_dev
+  schema_name: telco_churn
+
+
+experiment_name_basic: /Shared/telco-churn-basic
+experiment_name_custom: /Shared/telco-churn-custom
+
+parameters:
+  learning_rate: 0.01
+  n_estimators: 1000
+  max_depth: 6
+
+
+num_features:
+  - tenure
+  - MonthlyCharges
+  - TotalCharges
+
+cat_features:
+  - gender
+  - SeniorCitizen
+  - Partner
+  - Dependents
+  - tenure
+  - PhoneService
+  - MultipleLines
+  - InternetService
+  - OnlineSecurity
+  - OnlineBackup
+  - DeviceProtection
+  - TechSupport
+  - StreamingTV
+  - StreamingMovies
+  - Contract
+  - PaperlessBilling
+  - PaymentMethod
+
+target: Churn
