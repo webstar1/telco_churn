@@ -1,5 +1,5 @@
 # Databricks notebook source
-# MAGIC %pip install marvelousmlops-marvel-characters-1.0.1-py3-none-any.whl
+# MAGIC %pip install zohaibnajam-telco-churn-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 
@@ -22,9 +22,9 @@ from dotenv import load_dotenv
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 
-from marvel_characters.config import ProjectConfig, Tags
-from marvel_characters.models.basic_model import BasicModel
-from marvel_characters.utils import is_databricks
+from telco_churn.config import ProjectConfig, Tags
+from telco_churn.models.basic_model import BasicModel
+from telco_churn.utils import is_databricks
 
 # COMMAND ----------
 
@@ -42,15 +42,17 @@ if not is_databricks():
     mlflow.set_tracking_uri(f"databricks://{profile}")
     mlflow.set_registry_uri(f"databricks-uc://{profile}")
 
-config = ProjectConfig.from_yaml(config_path="../project_config_marvel.yml", env="dev")
+config = ProjectConfig.from_yaml(config_path="../project_config_telco.yml", env="dev")
 # Define tags (customize as needed)
 tags = Tags(git_sha="dev", branch="ab-testing")
 
 # COMMAND ----------
+
 catalog_name = config.catalog_name
 schema_name = config.schema_name
 
 # COMMAND ----------
+
 # Train model A
 basic_model_a = BasicModel(config=config, tags=tags, spark=spark)
 basic_model_a.load_data()
@@ -61,10 +63,11 @@ basic_model_a.register_model()
 model_A_uri = f"models:/{basic_model_a.model_name}@latest-model"
 
 # COMMAND ----------
+
 # Train model B (with different hyperparameters or features)
 basic_model_b = BasicModel(config=config, tags=tags, spark=spark)
 basic_model_b.parameters = {"learning_rate": 0.01, "n_estimators": 1000, "max_depth": 6}
-basic_model_b.model_name = f"{catalog_name}.{schema_name}.marvel_character_model_basic_B"
+basic_model_b.model_name = f"{catalog_name}.{schema_name}.telco_churn_model_basic_B"
 basic_model_b.load_data()
 basic_model_b.prepare_features()
 basic_model_b.train()
@@ -73,8 +76,9 @@ basic_model_b.register_model()
 model_B_uri = f"models:/{basic_model_b.model_name}@latest-model"
 
 # COMMAND ----------
+
 # Define A/B test wrapper
-class MarvelModelWrapper(mlflow.pyfunc.PythonModel):
+class TelcoModelWrapper(mlflow.pyfunc.PythonModel):
     def load_context(self, context):
         self.model_a = mlflow.sklearn.load_model(
             context.artifacts["sklearn-pipeline-model-A"]
@@ -95,6 +99,7 @@ class MarvelModelWrapper(mlflow.pyfunc.PythonModel):
             return {"Prediction": predictions[0], "model": "Model B"}
 
 # COMMAND ----------
+
 # Prepare data
 train_set_spark = spark.table(f"{catalog_name}.{schema_name}.train_set")
 train_set = train_set_spark.toPandas()
@@ -103,9 +108,10 @@ X_train = train_set[config.num_features + config.cat_features + ["Id"]]
 X_test = test_set[config.num_features + config.cat_features + ["Id"]]
 
 # COMMAND ----------
-mlflow.set_experiment(experiment_name="/Shared/marvel-characters-ab-testing")
-model_name = f"{catalog_name}.{schema_name}.marvel_character_model_pyfunc_ab_test"
-wrapped_model = MarvelModelWrapper()
+
+mlflow.set_experiment(experiment_name="/Shared/telco-churn-ab-testing")
+model_name = f"{catalog_name}.{schema_name}.telco_churn_model_pyfunc_ab_test"
+wrapped_model = TelcoModelWrapper()
 
 with mlflow.start_run() as run:
     run_id = run.info.run_id
@@ -114,20 +120,21 @@ with mlflow.start_run() as run:
     mlflow.log_input(dataset, context="training")
     mlflow.pyfunc.log_model(
         python_model=wrapped_model,
-        artifact_path="pyfunc-marvel-character-model-ab",
+        artifact_path="pyfunc-telco-churn-model-ab",
         artifacts={
             "sklearn-pipeline-model-A": model_A_uri,
             "sklearn-pipeline-model-B": model_B_uri},
         signature=signature
     )
 model_version = mlflow.register_model(
-    model_uri=f"runs:/{run_id}/pyfunc-marvel-character-model-ab", name=model_name
+    model_uri=f"runs:/{run_id}/pyfunc-telco-churn-model-ab", name=model_name
 )
 
 # COMMAND ----------
+
 # Model serving setup
 workspace = WorkspaceClient()
-endpoint_name = "marvel-characters-ab-testing"
+endpoint_name = "telco-churn-ab-testing"
 entity_version = model_version.version
 
 served_entities = [
@@ -147,6 +154,7 @@ workspace.serving_endpoints.create(
 )
 
 # COMMAND ----------
+
 # Create sample request body
 sampled_records = train_set[config.num_features + config.cat_features + ["Id"]].sample(n=1000, replace=True)
 
@@ -158,10 +166,11 @@ print(train_set.dtypes)
 print(dataframe_records[0])
 
 # COMMAND ----------
+
 # Call the endpoint with one sample record
 def call_endpoint(record):
     """Calls the model serving endpoint with a given input record."""
-    serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/marvel-characters-ab-testing/invocations"
+    serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/telco-churn-ab-testing/invocations"
 
     response = requests.post(
         serving_endpoint,
@@ -175,10 +184,10 @@ print(f"Response Status: {status_code}")
 print(f"Response Text: {response_text}")
 
 # COMMAND ----------
+
 # Load test
 for i in range(len(dataframe_records)):
     status_code, response_text = call_endpoint(dataframe_records[i])
     print(f"Response Status: {status_code}")
     print(f"Response Text: {response_text}")
     time.sleep(0.2)
-# COMMAND ----------

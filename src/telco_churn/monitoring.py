@@ -1,4 +1,4 @@
-"""Model monitoring module for Marvel characters."""
+"""Model monitoring module for Telco Churn."""
 
 from databricks.sdk import WorkspaceClient
 from databricks.sdk.errors import NotFound
@@ -15,7 +15,7 @@ from marvel_characters.config import ProjectConfig
 
 
 def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, workspace: WorkspaceClient) -> None:
-    """Create or refresh a monitoring table for Marvel character model serving data.
+    """Create or refresh a monitoring table for Telco Churn model serving data.
 
     This function processes the inference data from a Delta table,
     parses the request and response JSON fields, writes the resulting DataFrame to a Delta table for monitoring purposes.
@@ -40,16 +40,27 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
                 ArrayType(
                     StructType(
                         [
-                            StructField("Height", DoubleType(), True),
-                            StructField("Weight", DoubleType(), True),
-                            StructField("Universe", StringType(), True),
-                            StructField("Identity", StringType(), True),
-                            StructField("Gender", StringType(), True),
-                            StructField("Marital_Status", StringType(), True),
-                            StructField("Teams", StringType(), True),
-                            StructField("Origin", StringType(), True),
-                            StructField("Magic", StringType(), True),
-                            StructField("Mutant", StringType(), True),
+                            StructField("customerID", StringType(), True),
+                            StructField("gender", StringType(), True),
+                            StructField("SeniorCitizen", IntegerType(), True),
+                            StructField("Partner", StringType(), True),
+                            StructField("Dependents", StringType(), True),
+                            StructField("tenure", IntegerType(), True),
+                            StructField("PhoneService", StringType(), True),
+                            StructField("MultipleLines", StringType(), True),
+                            StructField("InternetService", StringType(), True),
+                            StructField("OnlineSecurity", StringType(), True),
+                            StructField("OnlineBackup", StringType(), True),
+                            StructField("DeviceProtection", StringType(), True),
+                            StructField("TechSupport", StringType(), True),
+                            StructField("StreamingTV", StringType(), True),
+                            StructField("StreamingMovies", StringType(), True),
+                            StructField("Contract", StringType(), True),
+                            StructField("PaperlessBilling", StringType(), True),
+                            StructField("PaymentMethod", StringType(), True),
+                            StructField("MonthlyCharges", DoubleType(), True),
+                            StructField("TotalCharges", DoubleType(), True),
+                            StructField("Churn", StringType(), True)
                         ]
                     )
                 ),
@@ -82,24 +93,46 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
         F.col("timestamp_ms"),  # Select the newly created timestamp_ms column
         "databricks_request_id",
         "execution_duration_ms",
-        F.col("record.Height").alias("Height"),
-        F.col("record.Weight").alias("Weight"),
-        F.col("record.Universe").alias("Universe"),
-        F.col("record.Identity").alias("Identity"),
-        F.col("record.Gender").alias("Gender"),
-        F.col("record.Marital_Status").alias("Marital_Status"),
-        F.col("record.Teams").alias("Teams"),
-        F.col("record.Origin").alias("Origin"),
-        F.col("record.Magic").alias("Magic"),
-        F.col("record.Mutant").alias("Mutant"),
-        F.col("parsed_response.predictions")[0].alias("prediction"),
-        F.lit("marvel-characters-model-fe").alias("model_name"),
+        F.col("record.customerID").alias("customerID"),
+        F.col("record.gender").alias("gender"),
+        F.col("record.SeniorCitizen").alias("SeniorCitizen"),
+        F.col("record.Partner").alias("Partner"),
+        F.col("record.Dependents").alias("Dependents"),
+        F.col("record.tenure").alias("tenure"),
+        F.col("record.PhoneService").alias("PhoneService"),
+        F.col("record.MultipleLines").alias("MultipleLines"),
+        F.col("record.InternetService").alias("InternetService"),
+        F.col("record.OnlineSecurity").alias("OnlineSecurity"),
+        F.col("record.OnlineBackup").alias("OnlineBackup"),
+        F.col("record.DeviceProtection").alias("DeviceProtection"),
+        F.col("record.TechSupport").alias("TechSupport"),
+        F.col("record.StreamingTV").alias("StreamingTV"),
+        F.col("record.StreamingMovies").alias("StreamingMovies"),
+        F.col("record.Contract").alias("Contract"),
+        F.col("record.PaperlessBilling").alias("PaperlessBilling"),
+        F.col("record.PaymentMethod").alias("PaymentMethod"),
+        F.col("record.MonthlyCharges").alias("MonthlyCharges"),
+        F.col("record.TotalCharges").alias("TotalCharges"),
+        F.col("record.Churn").alias("Churn"),
+        F.col("parsed_response.predictions")[0].alias("raw_prediction"),
+        F.col("parsed_response.predictions")[0][1].alias("churn_probability"),
+        F.lit("telco-churn-model-fe").alias("model_name"),
     )
 
     # Log counts at each step to diagnose where data might be getting filtered out
     logger.info(f"Records in df_final: {df_final.count()}")
 
-    df_final_with_status = df_final.withColumn("prediction", F.col("prediction").cast("int"))
+    df_final_with_status = df_final \
+        .withColumn("raw_prediction", F.col("parsed_response.predictions")[0]) \
+        .withColumn("churn_probability", F.col("parsed_response.predictions")[0][1].cast("double")) \
+        .withColumn(
+            "prediction",
+            F.when(F.col("churn_probability").isNotNull(),
+                (F.col("churn_probability") > 0.5).cast("int")
+            ).otherwise(
+                F.col("raw_prediction").cast("int")
+            )
+        )
 
     # Make dropna optional if we're losing all data
     df_with_valid_values = df_final_with_status.dropna(subset=["prediction"])
@@ -114,8 +147,9 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
         logger.warning("All records have null prediction values. Using records with potential nulls.")
 
     # Ensure Height and Weight are properly cast to double
-    df_final_with_status = df_final_with_status.withColumn("Height", F.col("Height").cast("double"))
-    df_final_with_status = df_final_with_status.withColumn("Weight", F.col("Weight").cast("double"))
+    df_final_with_status = df_final_with_status.withColumn("tenure", F.col("tenure").cast("int"))
+    df_final_with_status = df_final_with_status.withColumn("MonthlyCharges", F.col("MonthlyCharges").cast("double"))
+    df_final_with_status = df_final_with_status.withColumn("TotalCharges", F.col("TotalCharges").cast("double"))
 
     # Log the final count before writing
     final_count = df_final_with_status.count()

@@ -1,0 +1,17 @@
+README.md
+pyproject.toml
+version.txt
+src/marvel_characters/__init__.py
+src/marvel_characters/config.py
+src/marvel_characters/data_processor.py
+src/marvel_characters/monitoring.py
+src/marvel_characters/utils.py
+src/marvel_characters.egg-info/PKG-INFO
+src/marvel_characters.egg-info/SOURCES.txt
+src/marvel_characters.egg-info/dependency_links.txt
+src/marvel_characters.egg-info/requires.txt
+src/marvel_characters.egg-info/top_level.txt
+src/marvel_characters/models/__init__.py
+src/marvel_characters/models/basic_model.py
+src/marvel_characters/models/custom_model.py
+src/marvel_characters/serving/model_serving.py
