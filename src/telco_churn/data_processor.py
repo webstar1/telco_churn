@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
 
-from marvel_characters.config import ProjectConfig
+from telco_churn.config import ProjectConfig
 
 
 class DataProcessor:
@@ -23,7 +23,7 @@ class DataProcessor:
         self.spark = spark
 
     def preprocess(self) -> None:
-        """Preprocess the Marvel character DataFrame stored in self.df.
+        """Preprocess the telco churn DataFrame stored in self.df.
 
         This method handles missing values, converts data types, and performs feature engineering.
         """
@@ -31,14 +31,13 @@ class DataProcessor:
         num_features = self.config.num_features
         target = self.config.target
 
-        self.df.rename(columns={"Height (m)": "Height"}, inplace=True)
-        self.df.rename(columns={"Weight (kg)": "Weight"}, inplace=True)
+        self.df.rename(columns={"gender": "Gender"}, inplace=True)
+        self.df.rename(columns={"tenure": "Tenure"}, inplace=True)
 
-        # Universe
-        self.df["Universe"] = self.df["Universe"].fillna("Unknown")
-        counts = self.df["Universe"].value_counts()
-        small_universes = counts[counts < 50].index
-        self.df["Universe"] = self.df["Universe"].replace(small_universes, "Other")
+        # Multiple Lines
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No", 0)
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No phone service", 0)
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("Yes", 1)
 
         # Teams
         self.df["Teams"] = self.df["Teams"].notna().astype("int")
