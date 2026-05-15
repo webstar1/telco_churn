@@ -65,6 +65,12 @@ logger.info("Test set shape: %s", X_test.shape)
 
 # COMMAND ----------
 
+# Encode categorical features
+data_processor.fit_target_encoding(X_train)
+data_processor.apply_target_encoding(X_train, X_test)
+
+# COMMAND ----------
+
 # Save to catalog
 logger.info("Saving data to catalog")
 data_processor.save_to_catalog(X_train, X_test)
@@ -72,3 +78,5 @@ data_processor.save_to_catalog(X_train, X_test)
 # Enable change data feed (only once!)
 logger.info("Enable change data feed")
 data_processor.enable_change_data_feed()
+
+# COMMAND ----------

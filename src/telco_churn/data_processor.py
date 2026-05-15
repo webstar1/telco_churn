@@ -8,7 +8,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, to_utc_timestamp
 from sklearn.model_selection import train_test_split
 
-from marvel_characters.config import ProjectConfig
+from telco_churn.config import ProjectConfig
 
 
 class DataProcessor:
@@ -35,14 +35,20 @@ class DataProcessor:
         self.df.rename(columns={"gender": "MaleGender"}, inplace=True)
         self.df.rename(columns={"tenure": "Tenure"}, inplace=True)
 
-        # Total Charges
-        contract_map = {
-            'One year': 12,
-            'Two year': 24
-        }
-        self.df["TotalCharges"] = self.df["TotalCharges"].replace(" ", np.nan)
-        self.df["TotalCharges"] = self.df["TotalCharges"].astype(float)
-        self.df['TotalCharges'] = self.df['TotalCharges'].fillna(self.df['MonthlyCharges'] * self.df['Contract'].map(contract_map))
+        # Multiple Lines
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No", 0)
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No phone service", 0)
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("Yes", 1)
+
+        # Teams
+        self.df["Teams"] = self.df["Teams"].notna().astype("int")
+
+        # Origin
+        self.df["Origin"] = self.df["Origin"].fillna("Unknown")
+
+        # Identity
+        self.df["Identity"] = self.df["Identity"].fillna("Unknown")
+        self.df = self.df[self.df["Identity"].isin(["Public", "Secret", "Unknown"])]
 
         # Gender
         self.df['MaleGender'] = df['MaleGender'].map({'Male': 1, 'Female': 0})
@@ -131,11 +137,11 @@ class DataProcessor:
             "update_timestamp_utc", to_utc_timestamp(current_timestamp(), "UTC")
         )
 
-        train_set_with_timestamp.write.mode("overwrite").saveAsTable(
+        train_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
             f"{self.config.catalog_name}.{self.config.schema_name}.train_set"
         )
 
-        test_set_with_timestamp.write.mode("overwrite").saveAsTable(
+        test_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
             f"{self.config.catalog_name}.{self.config.schema_name}.test_set"
         )
 
