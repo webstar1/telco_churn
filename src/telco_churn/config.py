@@ -1,4 +1,4 @@
-"""Configuration file for the Marvel characters project."""
+"""Configuration file for the Telco Churn project."""
 
 from typing import Any
 
