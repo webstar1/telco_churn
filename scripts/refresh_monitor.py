@@ -2,8 +2,8 @@ import argparse
 from databricks.connect import DatabricksSession
 from databricks.sdk import WorkspaceClient
 
-from marvel_characters.config import ProjectConfig
-from marvel_characters.monitoring import create_or_refresh_monitoring
+from telco_churn.config import ProjectConfig
+from telco_churn.monitoring import create_or_refresh_monitoring
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -24,7 +24,7 @@ parser.add_argument(
 
 args = parser.parse_args()
 root_path = args.root_path
-config_path = f"{root_path}/files/project_config_marvel.yml"
+config_path = f"{root_path}/files/project_config_telco.yml"
 
 # Load configuration
 config = ProjectConfig.from_yaml(config_path=config_path, env=args.env)

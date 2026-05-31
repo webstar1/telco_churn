@@ -12,8 +12,8 @@ from pyspark.sql import SparkSession
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 # Import project modules after path setup
-from marvel_characters.config import ProjectConfig  # noqa: E402
-from marvel_characters.data_processor import DataProcessor, generate_synthetic_data, generate_test_data  # noqa: E402
+from telco_churn.config import ProjectConfig  # noqa: E402
+from telco_churn.data_processor import DataProcessor, generate_synthetic_data, generate_test_data  # noqa: E402
 
 
 @pytest.fixture
@@ -21,16 +21,16 @@ def sample_data() -> pd.DataFrame:
     """Create a sample DataFrame for testing."""
     return pd.DataFrame(
         {
-            "PageID": [1, 2, 3, 4, 5],
-            "Height (m)": [1.8, 1.9, None, 1.7, 1.6],
-            "Weight (kg)": [80, 85, 90, None, 75],
-            "Universe": ["Marvel", "DC", None, "Marvel", "Other"],
-            "Teams": ["Avengers", None, "X-Men", "Avengers", None],
-            "Origin": ["Human", "Mutant", None, "Alien", "Human"],
-            "Identity": ["Secret", "Public", None, "Secret", "Unknown"],
-            "Gender": ["Male", "Female", "Male", None, "Other"],
-            "Marital Status": ["Single", "Married", None, "Widow", "Unknown"],
-            "Alive": ["Alive", "Dead", "Alive", "Alive", "Dead"],
+            "customerID": ["1", "2", "3", "4", "5"],
+            "gender": ["Male", "Female", "Male", "Female", "Male"],
+            "SeniorCitizen": [0, 1, 0, 0, 1],
+            "Partner": ["Yes", "No", "Yes", "No", "Yes"],
+            "Dependents": ["No", "No", "Yes", "No", "Yes"],
+            "tenure": [12, 24, 36, 6, 48],
+            "MonthlyCharges": [70.5, 55.0, 100.2, 45.8, 80.0],
+            "TotalCharges": [846.0, 1320.0, 3607.2, 274.8, 3840.0],
+            "Contract": ["Month-to-month", "One year", "Two year", "Month-to-month", "Two year"],
+            "Churn": ["Yes", "No", "No", "Yes", "No"]
         }
     )
 
@@ -39,9 +39,9 @@ def sample_data() -> pd.DataFrame:
 def mock_config() -> MagicMock:
     """Create a mock ProjectConfig for testing."""
     config = MagicMock(spec=ProjectConfig)
-    config.cat_features = ["Universe", "Origin", "Identity", "Gender", "Marital_Status"]
-    config.num_features = ["Height", "Weight", "Teams", "Magic", "Mutant"]
-    config.target = "Alive"
+    config.cat_features =["gender","Partner","Dependents","Contract"]
+    config.num_features = ["SeniorCitizen","tenure","MonthlyCharges","TotalCharges"]
+    config.target = "Churn"
     config.catalog_name = "test_catalog"
     config.schema_name = "test_schema"
     return config
@@ -73,10 +73,10 @@ class TestDataProcessor:
         processor.preprocess()
 
         # Check column renames
-        assert "Height" in processor.df.columns
-        assert "Weight" in processor.df.columns
-        assert "Marital_Status" in processor.df.columns
-        assert "Id" in processor.df.columns
+        assert "customerID" not in processor.df.columns
+        assert "tenure" in processor.df.columns
+        assert "MonthlyCharges" in processor.df.columns
+        assert "TotalCharges" in processor.df.columns
 
         # Check missing value handling
         assert not processor.df["Universe"].isna().any()
