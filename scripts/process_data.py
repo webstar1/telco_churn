@@ -37,7 +37,7 @@ logger.info(yaml.dump(config, default_flow_style=False))
 spark = SparkSession.builder.getOrCreate()
 
 # Example: Adjust the path and loading logic as per your Telco Churn dataset location
-filepath = "/Volumes/mlops_dev/telco_churn/data/telco_churn_dataset.csv"
+filepath = f"{args.root_path}/files/data/telco_churn_dataset.csv"
 
 # Load the data
 df = pd.read_csv(filepath)
@@ -56,12 +56,6 @@ data_processor.preprocess()
 X_train, X_test = data_processor.split_data()
 logger.info("Training set shape: %s", X_train.shape)
 logger.info("Test set shape: %s", X_test.shape)
-
-# Apply target encoding to categorical features
-logger.info("Applying target encoding to categorical features")
-data_processor.fit_target_encoding(X_train)
-X_train, X_test = data_processor.apply_target_encoding(X_train, X_test)
-logger.info("Target encoding applied")
 
 # Save to catalog
 logger.info("Saving data to catalog")

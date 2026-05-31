@@ -1,4 +1,4 @@
-"""Model serving module for Marvel characters."""
+"""Model serving module for telco churn prediction."""
 
 import mlflow
 from databricks.sdk import WorkspaceClient
@@ -9,7 +9,7 @@ from databricks.sdk.service.serving import (
 
 
 class ModelServing:
-    """Manages model serving in Databricks for Marvel characters."""
+    """Manages model serving in Databricks for Telco churn prediction."""
 
     def __init__(self, model_name: str, endpoint_name: str) -> None:
         """Initialize the Model Serving Manager.
@@ -34,7 +34,7 @@ class ModelServing:
     def deploy_or_update_serving_endpoint(
         self, version: str = "latest", workload_size: str = "Small", scale_to_zero: bool = True
     ) -> None:
-        """Deploy or update the model serving endpoint in Databricks for Marvel characters.
+        """Deploy or update the model serving endpoint in Databricks for Telco churn.
 
         :param version: Model version to serve (default: "latest")
         :param workload_size: Size of the serving workload (default: "Small")

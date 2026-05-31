@@ -10,9 +10,9 @@
 # COMMAND ----------
 
 # Adjust system path for git folder 
-from pathlib import Path
-import sys
-sys.path.append(str(Path.cwd().parent / 'src'))
+# from pathlib import Path
+# import sys
+# sys.path.append(str(Path.cwd().parent / 'src'))
 
 # COMMAND ----------
 
@@ -31,10 +31,10 @@ logger.info(yaml.dump(config, default_flow_style=False))
 
 # COMMAND ----------
 
-# Load the Marvel characters dataset
+# Load the telco churn dataset
 spark = SparkSession.builder.getOrCreate()
 
-filepath = "../data/marvel_characters_dataset.csv"
+filepath = "../data/telco_customer_churn.csv"
 
 # Load the data
 df = pd.read_csv(filepath)
@@ -47,7 +47,7 @@ logger.info(df[config.target].value_counts())
 
 # COMMAND ----------
 
-# Load the Marvel characters dataset
+# Load the telco churn dataset
 
 data_processor = DataProcessor(df, config, spark)
 

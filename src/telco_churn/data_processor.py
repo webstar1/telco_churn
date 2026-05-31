@@ -51,7 +51,7 @@ class DataProcessor:
         self.df = self.df[self.df["Identity"].isin(["Public", "Secret", "Unknown"])]
 
         # Gender
-        self.df['MaleGender'] = df['MaleGender'].map({'Male': 1, 'Female': 0})
+        self.df['MaleGender'] = self.df['MaleGender'].map({'Male': 1, 'Female': 0})
 
         # Multiple Lines
         self.df['MultipleLines'] = self.df['MultipleLines'].replace('No phone service', 'No')
@@ -72,7 +72,7 @@ class DataProcessor:
         binary_cols = ['Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
 
         for col in binary_cols:
-            self.df[col] = df[col].map({'Yes': 1, 'No': 0})
+            self.df[col] = self.df[col].map({'Yes': 1, 'No': 0})
 
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
