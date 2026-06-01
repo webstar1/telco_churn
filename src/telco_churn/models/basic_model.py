@@ -62,7 +62,7 @@ class BasicModel:
         self.test_set_spark = self.spark.table(f"{self.catalog_name}.{self.schema_name}.test_set")
         self.test_set = self.test_set_spark.toPandas()
 
-        self.X_train = self.train_set[self.num_features + self.cat_features]
+        self.X_train = self.train_set[self.num_features]
         self.y_train = self.train_set[self.target]
         self.X_test = self.test_set[self.num_features + self.cat_features]
         self.y_test = self.test_set[self.target]

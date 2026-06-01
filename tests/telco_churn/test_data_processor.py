@@ -39,8 +39,7 @@ def sample_data() -> pd.DataFrame:
 def mock_config() -> MagicMock:
     """Create a mock ProjectConfig for testing."""
     config = MagicMock(spec=ProjectConfig)
-    config.cat_features =["gender","Partner","Dependents","Contract"]
-    config.num_features = ["SeniorCitizen","tenure","MonthlyCharges","TotalCharges"]
+    config.num_features = ["MaleGender","Partner","Dependents","PhoneService","MultipleLines","OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport","StreamingTV","StreamingMovies","PaperlessBilling","SeniorCitizen","Tenure","MonthlyCharges","TotalCharges","Contract","PaymentMethod","InternetService"]
     config.target = "Churn"
     config.catalog_name = "test_catalog"
     config.schema_name = "test_schema"
@@ -73,26 +72,24 @@ class TestDataProcessor:
         processor.preprocess()
 
         # Check column renames
-        assert "customerID" not in processor.df.columns
+        assert "gender" not in processor.df.columns
         assert "tenure" in processor.df.columns
-        assert "MonthlyCharges" in processor.df.columns
-        assert "TotalCharges" in processor.df.columns
 
         # Check missing value handling
-        assert not processor.df["Universe"].isna().any()
-        assert not processor.df["Origin"].isna().any()
-        assert not processor.df["Identity"].isna().any()
+        assert not processor.df["TotalCharges"].isna().any()
 
-        # Check feature engineering
-        assert "Magic" in processor.df.columns
-        assert "Mutant" in processor.df.columns
+        # Check data type
+        for col in mock_config.num_features:
+            assert pd.api.types.is_numeric_dtype(processor.df[col])
 
-        # Check data types
-        for col in mock_config.cat_features:
-            assert pd.api.types.is_categorical_dtype(processor.df[col])
+        # Check flag columns
+        binary_cols = ['Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+
+        for col in binary_cols:
+            assert set(processor.df[col].unique()).issubset({0, 1})
 
         # Check target conversion
-        assert set(processor.df["Alive"].unique()) == {0, 1}
+        assert set(processor.df["Churn"].unique()) == {0, 1}
 
     def test_split_data(self, sample_data: pd.DataFrame, mock_config: MagicMock, mock_spark: MagicMock) -> None:
         """Test the split_data method."""
