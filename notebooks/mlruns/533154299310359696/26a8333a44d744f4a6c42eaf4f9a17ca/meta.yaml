@@ -1,0 +1,14 @@
+artifact_uri: file:///c:/Users/Zabs/Github/telco_churn/notebooks/mlruns/533154299310359696/26a8333a44d744f4a6c42eaf4f9a17ca/artifacts
+end_time: 1780966236942
+entry_point_name: ''
+experiment_id: '533154299310359696'
+lifecycle_stage: active
+run_id: 26a8333a44d744f4a6c42eaf4f9a17ca
+run_name: intrigued-trout-183
+source_name: ''
+source_type: 4
+source_version: ''
+start_time: 1780966236027
+status: 3
+tags: []
+user_id: Zabs

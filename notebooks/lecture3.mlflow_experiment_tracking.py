@@ -1,8 +1,23 @@
+# COMMAND ----------
+import os
+import mlflow
+
+os.environ["DATABRICKS_CONFIG_PROFILE"] = "Zabs"
+
+mlflow.set_tracking_uri("databricks://Zabs")
+mlflow.set_registry_uri("databricks-uc://Zabs")
+
+# Note: '%restart_python' is a Databricks notebook magic command and causes
+# a SyntaxError ('Expected expression') in a standalone .py file. Removed
+# the magic and added a comment. If running inside Databricks, run the
+# notebook cell restart via the UI or include the magic in a Databricks
+# notebook environment.
+
 # Databricks notebook source
 import json
-import os
+#import os
 
-import mlflow
+#import mlflow
 from dotenv import load_dotenv
 
 
@@ -15,15 +30,6 @@ def is_databricks() -> bool:
 
 mlflow.get_tracking_uri()
 
-# COMMAND ----------
-
-if not is_databricks():
-    load_dotenv()
-    profile = os.environ.get("PROFILE")
-    mlflow.set_tracking_uri(f"databricks://{profile}")
-    mlflow.set_registry_uri(f"databricks-uc://{profile}")
-
-mlflow.get_tracking_uri()
 
 # COMMAND ----------
 
@@ -173,7 +179,7 @@ runs = mlflow.search_runs(
     order_by=["start_time DESC"],
     filter_string="status='FINISHED' AND "
                   f"start_time>{time_hour_ago} AND "
-                  "run_name LIKE '%marvel-demo-run%' AND "
+                  "run_name LIKE '%telco-demo-run%' AND "
                   "metrics.metric3>0 AND "
                   "tags.mlflow.source.type!='JOB'"
 )
@@ -203,9 +209,11 @@ mlflow.artifacts.download_artifacts(
 # COMMAND ----------
 
 # nested runs: useful for hyperparameter tuning
-with mlflow.start_run(run_name="marvel_top_level_run") as run:
+with mlflow.start_run(run_name="telco_top_level_run") as run:
     for i in range(1,5):
-        with mlflow.start_run(run_name=f"marvel_subrun_{str(i)}", nested=True) as subrun:
+        with mlflow.start_run(run_name=f"telco_subrun_{str(i)}", nested=True) as subrun:
             mlflow.log_metrics({"m1": 5.1+i,
                                 "m2": 2*i,
                                 "m3": 3+1.5*i})
+
+# COMMAND ----------
