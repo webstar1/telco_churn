@@ -1,5 +1,12 @@
 # Databricks notebook source
-# MAGIC %pip install zohaibnajam-telco-churn-1.0.1-py3-none-any.whl
+#Run if registering on Databricks
+import sys
+import os
+import importlib
+sys.path.insert(0, '/Workspace/Users/zohaib65@gmail.com/telco_churn/src')
+#%pip install loguru==0.7.3
+#dbutils.library.restartPython()
+#%pip install zohaibnajam-telco-churn-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 
@@ -7,6 +14,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 import hashlib
 import os
 import time
@@ -18,7 +26,7 @@ from databricks.sdk.service.serving import (
     EndpointCoreConfigInput,
     ServedEntityInput,
 )
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 
@@ -28,31 +36,36 @@ from telco_churn.utils import is_databricks
 
 # COMMAND ----------
 
-# Set up Databricks or local MLflow tracking
+import os
+from pyspark.sql import SparkSession
+
 spark = SparkSession.builder.getOrCreate()
-
-w = WorkspaceClient()
-
-os.environ["DBR_HOST"] = w.config.host
-os.environ["DBR_TOKEN"] = w.tokens.create(lifetime_seconds=1200).token_value
-
-if not is_databricks():
-    load_dotenv()
-    profile = os.environ["PROFILE"]
-    mlflow.set_tracking_uri(f"databricks://{profile}")
-    mlflow.set_registry_uri(f"databricks-uc://{profile}")
 
 config = ProjectConfig.from_yaml(config_path="../project_config_telco.yml", env="dev")
 # Define tags (customize as needed)
 tags = Tags(git_sha="dev", branch="ab-testing")
 
+def is_databricks():
+    return "DATABRICKS_RUNTIME_VERSION" in os.environ
+
+# ONLY for local (VS Code)
+#if not is_databricks():
+#    from databricks.sdk import WorkspaceClient
+
+#    w = WorkspaceClient()
+
+#    os.environ["DATABRICKS_HOST"] = w.config.host
+#    os.environ["DATABRICKS_TOKEN"] = w.tokens.create(lifetime_seconds=1200).token_value
+
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
 catalog_name = config.catalog_name
 schema_name = config.schema_name
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 6
 # Train model A
 basic_model_a = BasicModel(config=config, tags=tags, spark=spark)
 basic_model_a.load_data()
@@ -66,7 +79,7 @@ model_A_uri = f"models:/{basic_model_a.model_name}@latest-model"
 
 # Train model B (with different hyperparameters or features)
 basic_model_b = BasicModel(config=config, tags=tags, spark=spark)
-basic_model_b.parameters = {"learning_rate": 0.01, "n_estimators": 1000, "max_depth": 6}
+basic_model_b.parameters = {"n_estimators": 300,"max_depth": 10,"min_samples_split": 5,"min_samples_leaf": 2,"max_features": "sqrt","class_weight": "balanced","random_state": 42,"n_jobs": -1,}
 basic_model_b.model_name = f"{catalog_name}.{schema_name}.telco_churn_model_basic_B"
 basic_model_b.load_data()
 basic_model_b.prepare_features()
@@ -89,13 +102,13 @@ class TelcoModelWrapper(mlflow.pyfunc.PythonModel):
 
     def predict(self, context, model_input):
         # Use PageID (or another unique identifier) for splitting
-        page_id = str(model_input["Id"].values[0])
+        page_id = str(model_input["customerID"].values[0])
         hashed_id = hashlib.md5(page_id.encode(encoding="UTF-8")).hexdigest()
         if int(hashed_id, 16) % 2:
-            predictions = self.model_a.predict(model_input.drop(["Id"], axis=1))
+            predictions = self.model_a.predict(model_input.drop(["customerID"], axis=1))
             return {"Prediction": predictions[0], "model": "Model A"}
         else:
-            predictions = self.model_b.predict(model_input.drop(["Id"], axis=1))
+            predictions = self.model_b.predict(model_input.drop(["customerID"], axis=1))
             return {"Prediction": predictions[0], "model": "Model B"}
 
 # COMMAND ----------
@@ -104,8 +117,8 @@ class TelcoModelWrapper(mlflow.pyfunc.PythonModel):
 train_set_spark = spark.table(f"{catalog_name}.{schema_name}.train_set")
 train_set = train_set_spark.toPandas()
 test_set = spark.table(f"{catalog_name}.{schema_name}.test_set").toPandas()
-X_train = train_set[config.num_features + config.cat_features + ["Id"]]
-X_test = test_set[config.num_features + config.cat_features + ["Id"]]
+X_train = train_set[config.num_features + ["customerID"]]
+X_test = test_set[config.num_features + ["customerID"]]
 
 # COMMAND ----------
 
@@ -156,7 +169,7 @@ workspace.serving_endpoints.create(
 # COMMAND ----------
 
 # Create sample request body
-sampled_records = train_set[config.num_features + config.cat_features + ["Id"]].sample(n=1000, replace=True)
+sampled_records = train_set[config.num_features + ["customerID"]].sample(n=1000, replace=True)
 
 import numpy as np
 sampled_records = sampled_records.replace({np.nan: None}).to_dict(orient="records")
@@ -167,14 +180,21 @@ print(dataframe_records[0])
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 13
 # Call the endpoint with one sample record
 def call_endpoint(record):
     """Calls the model serving endpoint with a given input record."""
-    serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/telco-churn-ab-testing/invocations"
+    # For local runs (VS Code)
+    #serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/telco-churn-ab-testing/invocations"
+    # For Databricks notebook runs
+    serving_endpoint = f"{workspace.config.host}/serving-endpoints/telco-churn-ab-testing/invocations"
 
     response = requests.post(
         serving_endpoint,
-        headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+        # For local runs (VS Code)
+        #headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+        # For Databricks notebook runs
+        headers={"Authorization": f"Bearer {workspace.config.token}"},
         json={"dataframe_records": record},
     )
     return response.status_code, response.text

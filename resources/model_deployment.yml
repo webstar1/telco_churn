@@ -4,7 +4,7 @@ resources:
       name: ${bundle.name}-workflow
       schedule:
         quartz_cron_expression: "0 0 6 ? * MON"
-        timezone_id: "Europe/Amsterdam"
+        timezone_id: "Europe/London"
         pause_status: ${var.schedule_pause_status}
       tags:
         project_name: "telco-churn"

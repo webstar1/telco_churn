@@ -1,11 +1,6 @@
 README.md
 pyproject.toml
 version.txt
-src/marvel_characters.egg-info/PKG-INFO
-src/marvel_characters.egg-info/SOURCES.txt
-src/marvel_characters.egg-info/dependency_links.txt
-src/marvel_characters.egg-info/requires.txt
-src/marvel_characters.egg-info/top_level.txt
 src/telco_churn/__init__.py
 src/telco_churn/config.py
 src/telco_churn/data_processor.py

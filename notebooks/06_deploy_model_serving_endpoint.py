@@ -32,10 +32,8 @@ os.environ["DBR_HOST"] = w.config.host
 os.environ["DBR_TOKEN"] = w.tokens.create(lifetime_seconds=1200).token_value
 
 if not is_databricks():
-    load_dotenv()
-    profile = os.environ["PROFILE"]
-    mlflow.set_tracking_uri(f"databricks://{profile}")
-    mlflow.set_registry_uri(f"databricks-uc://{profile}")
+    mlflow.set_tracking_uri("databricks://Zabs")
+    mlflow.set_registry_uri("databricks-uc://Zabs")
 
 # Load project config
 config = ProjectConfig.from_yaml(config_path="../project_config_telco.yml", env="dev")
@@ -50,8 +48,6 @@ model_serving = ModelServing(
 )
 
 # COMMAND ----------
-
-# Deploy the model serving endpoint
 model_serving.deploy_or_update_serving_endpoint()
 
 
@@ -59,11 +55,12 @@ model_serving.deploy_or_update_serving_endpoint()
 
 # Create a sample request body
 required_columns = [
-    "gender",
+    "customerID",
+    "MaleGender",
     "SeniorCitizen",
     "Partner",
     "Dependents",
-    "tenure",
+    "Tenure",
     "PhoneService",
     "MultipleLines",
     "InternetService",
