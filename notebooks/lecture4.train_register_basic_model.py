@@ -26,7 +26,7 @@ if not is_databricks():
 
 config = ProjectConfig.from_yaml(config_path="../project_config_telco.yml", env="dev")
 spark = SparkSession.builder.getOrCreate()
-tags = Tags(**{"git_sha": "e2e8cf507c94d5b22bcafaa43cc899568781e42a", "branch": "main"})
+tags = Tags(**{"git_sha": "4c1e4ba45402fd415e8189fccd9ce291077357b2", "branch": "main"})
 
 # COMMAND ----------
 
@@ -71,7 +71,7 @@ logged_model.metrics
 # COMMAND ----------
 
 run_id = mlflow.search_runs(
-    experiment_names=["/Shared/telco-churn-basic"], filter_string="tags.git_sha='e2e8cf507c94d5b22bcafaa43cc899568781e42a'"
+    experiment_names=["/Shared/telco-churn-basic"], filter_string="tags.git_sha='4c1e4ba45402fd415e8189fccd9ce291077357b2'"
 ).run_id[0]
 
 model = mlflow.sklearn.load_model(f"runs:/{run_id}/random-forest-model")
@@ -108,6 +108,6 @@ print(v[0].__dict__)
 
 # not supported
 v = mlflow.search_model_versions(
-    filter_string="tags.git_sha='e2e8cf507c94d5b22bcafaa43cc899568781e42a'")
+    filter_string="tags.git_sha='4c1e4ba45402fd415e8189fccd9ce291077357b2'")
 
 # COMMAND ----------

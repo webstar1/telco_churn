@@ -48,6 +48,7 @@ model_serving = ModelServing(
 )
 
 # COMMAND ----------
+model_serving.deploy_or_update_serving_endpoint()
 
 
 # COMMAND ----------
