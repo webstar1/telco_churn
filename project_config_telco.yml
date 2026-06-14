@@ -23,27 +23,27 @@ parameters:
 
 
 num_features:
-  - tenure
+  - Tenure
   - MonthlyCharges
   - TotalCharges
-
-cat_features:
-  - gender
-  - SeniorCitizen
-  - Partner
-  - Dependents
-  - tenure
-  - PhoneService
+  - MaleGender
   - MultipleLines
-  - InternetService
   - OnlineSecurity
   - OnlineBackup
   - DeviceProtection
   - TechSupport
   - StreamingTV
   - StreamingMovies
-  - Contract
+  - Partner
+  - Dependents
+  - PhoneService
   - PaperlessBilling
+  - SeniorCitizen
+  - InternetService
+  - Contract
   - PaymentMethod
+
+cat_features: []
+
 
 target: Churn

@@ -9,7 +9,7 @@ from databricks.sdk.service.serving import (
 
 
 class ModelServing:
-    """Manages model serving in Databricks for Telco churn prediction."""
+    """Manages model serving in Databricks for telco churn prediction."""
 
     def __init__(self, model_name: str, endpoint_name: str) -> None:
         """Initialize the Model Serving Manager.

@@ -64,9 +64,9 @@ class BasicModel:
 
         self.X_train = self.train_set[self.num_features]
         self.y_train = self.train_set[self.target]
-        self.X_test = self.test_set[self.num_features + self.cat_features]
+        self.X_test = self.test_set[self.num_features]
         self.y_test = self.test_set[self.target]
-        self.eval_data = self.test_set[self.num_features + self.cat_features + [self.target]]
+        self.eval_data = self.test_set[self.num_features + [self.target]]
 
         train_delta_table = DeltaTable.forName(self.spark, f"{self.catalog_name}.{self.schema_name}.train_set")
         self.train_data_version = str(train_delta_table.history().select("version").first()[0])
@@ -95,7 +95,7 @@ class BasicModel:
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
 
-            infer_signature(
+            signature = infer_signature(
                 model_input=self.X_train,
                 model_output=self.pipeline.predict_proba(self.X_train)
             )
