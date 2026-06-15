@@ -1,13 +1,20 @@
 # Databricks notebook source
+# DBTITLE 1,Cell 1
+#Run if registering on Databricks
+#import sys
+#import os
+#import importlib
+#sys.path.insert(0, '/Workspace/Users/zohaib65@gmail.com/telco_churn/src')
+
 import mlflow
 from pyspark.sql import SparkSession
 
 from telco_churn.config import ProjectConfig, Tags
+import telco_churn.models.custom_model
 from telco_churn.models.custom_model import TelcoChurnModelWrapper
 from importlib.metadata import version
 from dotenv import load_dotenv
 from mlflow import MlflowClient
-import os
 
 # Set up Databricks or local MLflow tracking
 def is_databricks():
@@ -45,6 +52,7 @@ X_test = test_set[config.num_features]
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 7
 pyfunc_model_name = f"{config.catalog_name}.{config.schema_name}.telco_churn_model_custom"
 wrapper = TelcoChurnModelWrapper()
 wrapper.log_register_model(wrapped_model_uri=f"models:/{wrapped_model_version.name}/{wrapped_model_version.version}",
@@ -66,6 +74,7 @@ unwraped_model = loaded_pufunc_model.unwrap_python_model()
 unwraped_model.predict(context=None, model_input=X_test[0:1])
 
 # COMMAND ----------
+
 latest = client.get_model_version_by_alias(
     name=pyfunc_model_name,
     alias="latest-model"

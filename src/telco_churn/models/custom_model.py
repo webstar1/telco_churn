@@ -30,59 +30,59 @@ class TelcoChurnModelWrapper(mlflow.pyfunc.PythonModel):
             "churn_probability": probabilities[:, 1].tolist(),
         }
 
-def log_register_model(
-    self,
-    wrapped_model_uri: str,
-    pyfunc_model_name: str,
-    experiment_name: str,
-    tags: Tags,
-    code_paths: list[str],
-    input_example: pd.DataFrame,
-) -> None:
-    mlflow.set_experiment(experiment_name=experiment_name)
-    with mlflow.start_run(run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}", tags=tags.to_dict()):
-        
-        # ✅ REMOVE the download_artifacts call
-        # local_model_path = mlflow.artifacts.download_artifacts(...)
-        
-        additional_pip_deps = []
-        for package in code_paths:
-            whl_name = package.split("/")[-1]
-            additional_pip_deps.append(f"code/{whl_name}")
+    def log_register_model(
+        self,
+        wrapped_model_uri: str,
+        pyfunc_model_name: str,
+        experiment_name: str,
+        tags: Tags,
+        code_paths: list[str],
+        input_example: pd.DataFrame,
+    ) -> None:
+        mlflow.set_experiment(experiment_name=experiment_name)
+        with mlflow.start_run(run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}", tags=tags.to_dict()):
+            
+            # ✅ REMOVE the download_artifacts call
+            # local_model_path = mlflow.artifacts.download_artifacts(...)
+            
+            additional_pip_deps = []
+            for package in code_paths:
+                whl_name = package.split("/")[-1]
+                additional_pip_deps.append(f"code/{whl_name}")
 
-        conda_env = _mlflow_conda_env(
-            additional_pip_deps=additional_pip_deps
-        )
+            conda_env = _mlflow_conda_env(
+                additional_pip_deps=additional_pip_deps
+            )
 
-        signature = infer_signature(
-            model_input=input_example,
-            model_output={
-                "prediction": [1],
-                "churn_probability": [0.75],
-            },
-        )
+            signature = infer_signature(
+                model_input=input_example,
+                model_output={
+                    "prediction": [1],
+                    "churn_probability": [0.75],
+                },
+            )
 
-        model_info = mlflow.pyfunc.log_model(
-            artifact_path="pyfunc-wrapper",
-            python_model=self,
-            artifacts={
-                "random-forest-model": wrapped_model_uri  # ✅ Use URI directly
-            },
-            signature=signature,
-            input_example=input_example,
-            code_paths=code_paths,
-            conda_env=conda_env,
-        )
-        client = MlflowClient()
-        registered_model = mlflow.register_model(
-            model_uri=model_info.model_uri,
-            name=pyfunc_model_name,
-            tags=tags.to_dict(),
-        )
-        latest_version = registered_model.version
-        client.set_registered_model_alias(
-            name=pyfunc_model_name,
-            alias="latest-model",
-            version=latest_version,
-        )
-        return latest_version
+            model_info = mlflow.pyfunc.log_model(
+                artifact_path="pyfunc-wrapper",
+                python_model=self,
+                artifacts={
+                    "random-forest-model": wrapped_model_uri  # ✅ Use URI directly
+                },
+                signature=signature,
+                input_example=input_example,
+                code_paths=code_paths,
+                conda_env=conda_env,
+            )
+            client = MlflowClient()
+            registered_model = mlflow.register_model(
+                model_uri=model_info.model_uri,
+                name=pyfunc_model_name,
+                tags=tags.to_dict(),
+            )
+            latest_version = registered_model.version
+            client.set_registered_model_alias(
+                name=pyfunc_model_name,
+                alias="latest-model",
+                version=latest_version,
+            )
+            return latest_version
