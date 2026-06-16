@@ -1,5 +1,4 @@
 # Databricks notebook source
-# DBTITLE 1,Cell 1
 #Run if registering on Databricks
 #import sys
 #import os
