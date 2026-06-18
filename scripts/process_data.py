@@ -37,7 +37,7 @@ logger.info(yaml.dump(config, default_flow_style=False))
 spark = SparkSession.builder.getOrCreate()
 
 # Example: Adjust the path and loading logic as per your Telco Churn dataset location
-filepath = f"{args.root_path}/files/data/telco_churn_dataset.csv"
+filepath = "/Volumes/mlops_dev/telco_churn/data/telco_churn_dataset.csv"
 
 # Load the data
 df = pd.read_csv(filepath)
