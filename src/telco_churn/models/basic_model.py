@@ -121,7 +121,7 @@ class BasicModel:
 
             preds = self.pipeline.predict(self.X_test)
             self.metrics = {
-                "f1": f1_score(self.y_test, preds)
+                "f1_score": f1_score(self.y_test, preds)
             }
 
     def model_improved(self) -> bool:
@@ -131,23 +131,27 @@ class BasicModel:
         :return: True if the current model performs better, False otherwise.
         """
         client = MlflowClient()
-        latest_model_version = client.get_model_version_by_alias(name=self.model_name, alias="latest-model")
-        latest_model_uri = f"models:/{latest_model_version.model_id}"
+        try:
+            latest_model_version = client.get_model_version_by_alias(name=self.model_name, alias="latest-model")
+            latest_model_uri = f"models:/{latest_model_version.model_id}"
 
-        result = mlflow.models.evaluate(
-            latest_model_uri,
-            self.eval_data,
-            targets=self.config.target,
-            model_type="classifier",
-            evaluators=["default"],
-        )
-        metrics_old = result.metrics
-        if self.metrics["f1_score"] >= metrics_old["f1_score"]:
-            logger.info("Current model performs better. Returning True.")
+            result = mlflow.models.evaluate(
+                latest_model_uri,
+                self.eval_data,
+                targets=self.config.target,
+                model_type="classifier",
+                evaluators=["default"],
+            )
+            metrics_old = result.metrics
+            if self.metrics["f1_score"] >= metrics_old["f1_score"]:
+                logger.info("Current model performs better. Returning True.")
+                return True
+            else:
+                logger.info("Current model does not improve over latest. Returning False.")
+                return False
+        except Exception as e:
+            logger.info(f"No previous model found or evaluation failed: {e}. Treating as first run.")
             return True
-        else:
-            logger.info("Current model does not improve over latest. Returning False.")
-            return False
 
     def register_model(self) -> None:
         """Register model in Unity Catalog."""
