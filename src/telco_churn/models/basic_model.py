@@ -90,8 +90,8 @@ class BasicModel:
         self.pipeline.fit(self.X_train, self.y_train)
 
     def log_model(self) -> None:
-        """Log the model using MLflow."""
         mlflow.set_experiment(self.experiment_name)
+
         with mlflow.start_run(tags=self.tags) as run:
             self.run_id = run.info.run_id
 
@@ -99,35 +99,30 @@ class BasicModel:
                 model_input=self.X_train,
                 model_output=self.pipeline.predict_proba(self.X_train)
             )
-            train_dataset = mlflow.data.from_spark(
-                self.train_set_spark,
-                table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
-                version=self.train_data_version,
+
+            mlflow.log_input(
+                mlflow.data.from_spark(
+                    self.train_set_spark,
+                    table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
+                    version=self.train_data_version,
+                ),
+                context="training"
             )
-            mlflow.log_input(train_dataset, context="training")
-            test_dataset = mlflow.data.from_spark(
-                self.test_set_spark,
-                table_name=f"{self.catalog_name}.{self.schema_name}.test_set",
-                version=self.test_data_version,
-            )
-            mlflow.log_input(test_dataset, context="testing")
+
             self.model_info = mlflow.sklearn.log_model(
                 sk_model=self.pipeline,
                 artifact_path="random-forest-model",
                 signature=signature,
                 input_example=self.X_test[0:1],
             )
-            eval_data = self.X_test.copy()
-            eval_data[self.config.target] = self.y_test
 
-            result = mlflow.models.evaluate(
-                self.model_info.model_uri,
-                eval_data,
-                targets=self.config.target,
-                model_type="classifier",
-                evaluators=["default"],
-            )
-            self.metrics = result.metrics
+            # SAFE evaluation (no Spark / no registry dependency)
+            from sklearn.metrics import f1_score
+
+            preds = self.pipeline.predict(self.X_test)
+            self.metrics = {
+                "f1": f1_score(self.y_test, preds)
+            }
 
     def model_improved(self) -> bool:
         """Evaluate the model performance on the test set.

@@ -1,10 +1,12 @@
 # Databricks notebook source
 #Run if registering on Databricks
-#import sys
-#import os
-#import importlib
-#sys.path.insert(0, '/Workspace/Users/zohaib65@gmail.com/telco_churn/src')
-# MAGIC %pip install zohaibnajam-telco-churn-1.0.1-py3-none-any.whl
+import sys
+import os
+import importlib
+sys.path.insert(0, '/Workspace/Users/zohaib65@gmail.com/telco_churn/src')
+#%pip install loguru==0.7.3
+#dbutils.library.restartPython()
+#%pip install zohaibnajam-telco-churn-1.0.1-py3-none-any.whl
 
 # COMMAND ----------
 
@@ -12,6 +14,7 @@
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 3
 import hashlib
 import os
 import time
@@ -23,7 +26,7 @@ from databricks.sdk.service.serving import (
     EndpointCoreConfigInput,
     ServedEntityInput,
 )
-from dotenv import load_dotenv
+#from dotenv import load_dotenv
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
 
@@ -33,29 +36,36 @@ from telco_churn.utils import is_databricks
 
 # COMMAND ----------
 
-# Set up Databricks or local MLflow tracking
+import os
+from pyspark.sql import SparkSession
+
 spark = SparkSession.builder.getOrCreate()
-
-w = WorkspaceClient()
-
-os.environ["DBR_HOST"] = w.config.host
-os.environ["DBR_TOKEN"] = w.tokens.create(lifetime_seconds=1200).token_value
-
-if not is_databricks():
-    mlflow.set_tracking_uri("databricks://Zabs")
-    mlflow.set_registry_uri("databricks-uc://Zabs")
 
 config = ProjectConfig.from_yaml(config_path="../project_config_telco.yml", env="dev")
 # Define tags (customize as needed)
 tags = Tags(git_sha="dev", branch="ab-testing")
 
+def is_databricks():
+    return "DATABRICKS_RUNTIME_VERSION" in os.environ
+
+# ONLY for local (VS Code)
+#if not is_databricks():
+#    from databricks.sdk import WorkspaceClient
+
+#    w = WorkspaceClient()
+
+#    os.environ["DATABRICKS_HOST"] = w.config.host
+#    os.environ["DATABRICKS_TOKEN"] = w.tokens.create(lifetime_seconds=1200).token_value
+
 # COMMAND ----------
 
+# DBTITLE 1,Cell 5
 catalog_name = config.catalog_name
 schema_name = config.schema_name
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 6
 # Train model A
 basic_model_a = BasicModel(config=config, tags=tags, spark=spark)
 basic_model_a.load_data()
@@ -170,14 +180,21 @@ print(dataframe_records[0])
 
 # COMMAND ----------
 
+# DBTITLE 1,Cell 13
 # Call the endpoint with one sample record
 def call_endpoint(record):
     """Calls the model serving endpoint with a given input record."""
-    serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/telco-churn-ab-testing/invocations"
+    # For local runs (VS Code)
+    #serving_endpoint = f"{os.environ['DBR_HOST']}/serving-endpoints/telco-churn-ab-testing/invocations"
+    # For Databricks notebook runs
+    serving_endpoint = f"{workspace.config.host}/serving-endpoints/telco-churn-ab-testing/invocations"
 
     response = requests.post(
         serving_endpoint,
-        headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+        # For local runs (VS Code)
+        #headers={"Authorization": f"Bearer {os.environ['DBR_TOKEN']}"},
+        # For Databricks notebook runs
+        headers={"Authorization": f"Bearer {workspace.config.token}"},
         json={"dataframe_records": record},
     )
     return response.status_code, response.text
