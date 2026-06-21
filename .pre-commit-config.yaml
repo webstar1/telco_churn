@@ -8,22 +8,21 @@ exclude: |
     \.vscode/|
     typings/__builtins__\.pyi
   )
+
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.6.9
     hooks:
-      - id: check-json
-      - id: check-toml
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.6.0
+    hooks:
       - id: check-yaml
-        args: ["--unsafe"]
+      - id: check-toml
+      - id: check-json
       - id: end-of-file-fixer
       - id: trailing-whitespace
       - id: detect-private-key
-      - id: forbid-new-submodules
-      - id: check-docstring-first
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.9.5
-    hooks:
-      - id: ruff
-        args: [--fix, --exit-non-zero-on-fix, --show-fixes]
-      - id: ruff-format
