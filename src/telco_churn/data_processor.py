@@ -26,9 +26,6 @@ class DataProcessor:
 
         This method handles missing values, converts data types, and performs feature engineering.
         """
-        cat_features = self.config.cat_features
-        num_features = self.config.num_features
-        target = self.config.target
 
         self.df.rename(columns={"gender": "MaleGender"}, inplace=True)
         self.df.rename(columns={"tenure": "Tenure"}, inplace=True)
@@ -78,14 +75,18 @@ class DataProcessor:
         for col in binary_cols:
             self.df[col] = self.df[col].map({"Yes": 1, "No": 0})
 
-    def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def split_data(
+        self, test_size: float = 0.2, random_state: int = 42
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
 
         :param test_size: The proportion of the dataset to include in the test split.
         :param random_state: Controls the shuffling applied to the data before applying the split.
         :return: A tuple containing the training and test DataFrames.
         """
-        train_set, test_set = train_test_split(self.df, test_size=test_size, random_state=random_state)
+        train_set, test_set = train_test_split(
+            self.df, test_size=test_size, random_state=random_state
+        )
         return train_set, test_set
 
     def fit_target_encoding(self, train_df) -> None:
@@ -118,13 +119,13 @@ class DataProcessor:
             "update_timestamp_utc", to_utc_timestamp(current_timestamp(), "UTC")
         )
 
-        train_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-            f"{self.config.catalog_name}.{self.config.schema_name}.train_set"
-        )
+        train_set_with_timestamp.write.mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(f"{self.config.catalog_name}.{self.config.schema_name}.train_set")
 
-        test_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-            f"{self.config.catalog_name}.{self.config.schema_name}.test_set"
-        )
+        test_set_with_timestamp.write.mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(f"{self.config.catalog_name}.{self.config.schema_name}.test_set")
 
     def enable_change_data_feed(self) -> None:
         """Enable Change Data Feed for train and test set tables.

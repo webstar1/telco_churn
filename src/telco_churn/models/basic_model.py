@@ -65,9 +65,13 @@ class BasicModel:
         self.y_test = self.test_set[self.target]
         self.eval_data = self.test_set[self.num_features + [self.target]]
 
-        train_delta_table = DeltaTable.forName(self.spark, f"{self.catalog_name}.{self.schema_name}.train_set")
+        train_delta_table = DeltaTable.forName(
+            self.spark, f"{self.catalog_name}.{self.schema_name}.train_set"
+        )
         self.train_data_version = str(train_delta_table.history().select("version").first()[0])
-        test_delta_table = DeltaTable.forName(self.spark, f"{self.catalog_name}.{self.schema_name}.test_set")
+        test_delta_table = DeltaTable.forName(
+            self.spark, f"{self.catalog_name}.{self.schema_name}.test_set"
+        )
         self.test_data_version = str(test_delta_table.history().select("version").first()[0])
         logger.info("✅ Data successfully loaded.")
 
@@ -123,7 +127,9 @@ class BasicModel:
         """
         client = MlflowClient()
         try:
-            latest_model_version = client.get_model_version_by_alias(name=self.model_name, alias="latest-model")
+            latest_model_version = client.get_model_version_by_alias(
+                name=self.model_name, alias="latest-model"
+            )
             latest_model_uri = f"models:/{latest_model_version.model_id}"
 
             result = mlflow.models.evaluate(
@@ -141,7 +147,9 @@ class BasicModel:
                 logger.info("Current model does not improve over latest. Returning False.")
                 return False
         except Exception as e:
-            logger.info(f"No previous model found or evaluation failed: {e}. Treating as first run.")
+            logger.info(
+                f"No previous model found or evaluation failed: {e}. Treating as first run."
+            )
             return True
 
     def register_model(self) -> None:

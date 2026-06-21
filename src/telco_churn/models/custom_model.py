@@ -41,7 +41,8 @@ class TelcoChurnModelWrapper(mlflow.pyfunc.PythonModel):
     ) -> None:
         mlflow.set_experiment(experiment_name=experiment_name)
         with mlflow.start_run(
-            run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}", tags=tags.to_dict()
+            run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}",
+            tags=tags.to_dict(),
         ):
             # ✅ REMOVE the download_artifacts call
             # local_model_path = mlflow.artifacts.download_artifacts(...)
