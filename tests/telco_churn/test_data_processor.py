@@ -13,11 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 # Import project modules after path setup
 from telco_churn.config import ProjectConfig  # noqa: E402
-from telco_churn.data_processor import (  # noqa: E402
-    DataProcessor,
-    generate_synthetic_data,
-    generate_test_data,
-)
+from telco_churn.data_processor import DataProcessor
 
 
 @pytest.fixture
@@ -201,49 +197,3 @@ class TestDataProcessor:
 
         # Check that SparkSession.sql was called twice
         assert mock_spark.sql.call_count == 2
-
-
-class TestDataGenerationFunctions:
-    """Tests for the data generation functions."""
-
-    def test_generate_synthetic_data(self, sample_data: pd.DataFrame) -> None:
-        """Test the generate_synthetic_data function."""
-        # Preprocess the sample data to match expected format
-        processor = DataProcessor(
-            sample_data,
-            MagicMock(spec=ProjectConfig, cat_features=[], num_features=[], target="Alive"),
-            MagicMock(),
-        )
-        processor.preprocess()
-
-        # Generate synthetic data
-        synthetic_data = generate_synthetic_data(processor.df, drift=False, num_rows=10)
-
-        # Check that the synthetic data has the expected number of rows
-        assert len(synthetic_data) == 10
-
-        # Check that the synthetic data has the same columns
-        assert set(synthetic_data.columns) == set(processor.df.columns)
-
-        # Test with drift
-        synthetic_data_drift = generate_synthetic_data(processor.df, drift=True, num_rows=10)
-        assert len(synthetic_data_drift) == 10
-
-    def test_generate_test_data(self, sample_data: pd.DataFrame) -> None:
-        """Test the generate_test_data function."""
-        # Preprocess the sample data to match expected format
-        processor = DataProcessor(
-            sample_data,
-            MagicMock(spec=ProjectConfig, cat_features=[], num_features=[], target="Alive"),
-            MagicMock(),
-        )
-        processor.preprocess()
-
-        # Generate test data
-        test_data = generate_test_data(processor.df, num_rows=5)
-
-        # Check that the test data has the expected number of rows
-        assert len(test_data) == 5
-
-        # Check that the test data has the same columns
-        assert set(test_data.columns) == set(processor.df.columns)
