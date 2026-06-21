@@ -1,7 +1,5 @@
 """Data preprocessing module for Telco Churn."""
 
-import time
-
 import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession
@@ -36,37 +34,49 @@ class DataProcessor:
         self.df.rename(columns={"tenure": "Tenure"}, inplace=True)
 
         # Total Charges
-        contract_map = {
-            'One year': 12,
-            'Two year': 24
-        }
+        contract_map = {"One year": 12, "Two year": 24}
         self.df["TotalCharges"] = self.df["TotalCharges"].replace(" ", np.nan)
         self.df["TotalCharges"] = self.df["TotalCharges"].astype(float)
-        self.df['TotalCharges'] = self.df['TotalCharges'].fillna(self.df['MonthlyCharges'] * self.df['Contract'].map(contract_map))
+        self.df["TotalCharges"] = self.df["TotalCharges"].fillna(
+            self.df["MonthlyCharges"] * self.df["Contract"].map(contract_map)
+        )
 
         # Gender
-        self.df['MaleGender'] = self.df['MaleGender'].map({'Male': 1, 'Female': 0})
+        self.df["MaleGender"] = self.df["MaleGender"].map({"Male": 1, "Female": 0})
 
         # Multiple Lines
-        self.df['MultipleLines'] = self.df['MultipleLines'].replace('No phone service', 'No')
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No phone service", "No")
 
         # Convert internet columns to flag columns
         internet_cols = [
-            'OnlineSecurity',
-            'OnlineBackup',
-            'DeviceProtection',
-            'TechSupport',
-            'StreamingTV',
-            'StreamingMovies'
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
         ]
 
-        self.df[internet_cols] = self.df[internet_cols].replace('No internet service', 'No')
+        self.df[internet_cols] = self.df[internet_cols].replace("No internet service", "No")
 
         # Convert flag columns to numeric
-        binary_cols = ['Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+        binary_cols = [
+            "Partner",
+            "Dependents",
+            "PhoneService",
+            "MultipleLines",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
+            "PaperlessBilling",
+            "Churn",
+        ]
 
         for col in binary_cols:
-            self.df[col] = self.df[col].map({'Yes': 1, 'No': 0})
+            self.df[col] = self.df[col].map({"Yes": 1, "No": 0})
 
     def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
@@ -79,41 +89,18 @@ class DataProcessor:
         return train_set, test_set
 
     def fit_target_encoding(self, train_df) -> None:
-
-        target_encode_cols = [
-            'InternetService',
-            'Contract',
-            'PaymentMethod'
-        ]
+        target_encode_cols = ["InternetService", "Contract", "PaymentMethod"]
 
         for col in target_encode_cols:
+            self.target_encodings[col] = train_df.groupby(col)["Churn"].mean().to_dict()
 
-            self.target_encodings[col] = (
-                train_df.groupby(col)['Churn']
-                .mean()
-                .to_dict()
-            )
-
-
-    def apply_target_encoding(self,train_df,test_df):
-
-        target_encode_cols = [
-            'InternetService',
-            'Contract',
-            'PaymentMethod'
-        ]
+    def apply_target_encoding(self, train_df, test_df):
+        target_encode_cols = ["InternetService", "Contract", "PaymentMethod"]
 
         for col in target_encode_cols:
+            train_df[col] = train_df[col].map(self.target_encodings[col])
 
-            train_df[col] = (
-                train_df[col]
-                .map(self.target_encodings[col])
-            )
-
-            test_df[col] = (
-                test_df[col]
-                .map(self.target_encodings[col])
-            )
+            test_df[col] = test_df[col].map(self.target_encodings[col])
 
         return train_df, test_df
 

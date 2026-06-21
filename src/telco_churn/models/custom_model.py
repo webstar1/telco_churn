@@ -40,19 +40,18 @@ class TelcoChurnModelWrapper(mlflow.pyfunc.PythonModel):
         input_example: pd.DataFrame,
     ) -> None:
         mlflow.set_experiment(experiment_name=experiment_name)
-        with mlflow.start_run(run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}", tags=tags.to_dict()):
-            
+        with mlflow.start_run(
+            run_name=f"wrapper-random-forest-{datetime.now().strftime('%Y-%m-%d')}", tags=tags.to_dict()
+        ):
             # ✅ REMOVE the download_artifacts call
             # local_model_path = mlflow.artifacts.download_artifacts(...)
-            
+
             additional_pip_deps = []
             for package in code_paths:
                 whl_name = package.split("/")[-1]
                 additional_pip_deps.append(f"code/{whl_name}")
 
-            conda_env = _mlflow_conda_env(
-                additional_pip_deps=additional_pip_deps
-            )
+            conda_env = _mlflow_conda_env(additional_pip_deps=additional_pip_deps)
 
             signature = infer_signature(
                 model_input=input_example,

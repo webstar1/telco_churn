@@ -27,7 +27,7 @@ def sample_data() -> pd.DataFrame:
             "Dependents": ["No", "No", "No", "No", "No"],
             "tenure": [1, 34, 2, 45, 2],
             "PhoneService": ["No", "Yes", "Yes", "No", "Yes"],
-            "MultipleLines": ["No phone service","No","No","No phone service","No"],
+            "MultipleLines": ["No phone service", "No", "No", "No phone service", "No"],
             "InternetService": ["DSL", "DSL", "DSL", "DSL", "Fiber optic"],
             "OnlineSecurity": ["No", "Yes", "Yes", "Yes", "No"],
             "OnlineBackup": ["Yes", "No", "Yes", "No", "No"],
@@ -35,12 +35,18 @@ def sample_data() -> pd.DataFrame:
             "TechSupport": ["No", "No", "No", "Yes", "No"],
             "StreamingTV": ["No", "No", "No", "No", "No"],
             "StreamingMovies": ["No", "No", "No", "No", "No"],
-            "Contract": ["Month-to-month","One year","Month-to-month","One year","Month-to-month"],
+            "Contract": ["Month-to-month", "One year", "Month-to-month", "One year", "Month-to-month"],
             "PaperlessBilling": ["Yes", "No", "Yes", "No", "Yes"],
-            "PaymentMethod": ["Electronic check","Mailed check","Mailed check","Bank transfer (automatic)","Electronic check"],
+            "PaymentMethod": [
+                "Electronic check",
+                "Mailed check",
+                "Mailed check",
+                "Bank transfer (automatic)",
+                "Electronic check",
+            ],
             "MonthlyCharges": [29.85, 56.95, 53.85, 42.30, 70.70],
             "TotalCharges": [29.85, 1889.50, 108.15, 1840.75, 151.65],
-            "Churn": ["No", "No", "Yes", "No", "Yes"]
+            "Churn": ["No", "No", "Yes", "No", "Yes"],
         }
     )
 
@@ -49,7 +55,27 @@ def sample_data() -> pd.DataFrame:
 def mock_config() -> MagicMock:
     """Create a mock ProjectConfig for testing."""
     config = MagicMock(spec=ProjectConfig)
-    config.num_features = ["Tenure","MonthlyCharges","TotalCharges","MaleGender","MultipleLines","OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport","StreamingTV","StreamingMovies","Partner","Dependents","PhoneService","PaperlessBilling","SeniorCitizen","InternetService","Contract","PaymentMethod"]
+    config.num_features = [
+        "Tenure",
+        "MonthlyCharges",
+        "TotalCharges",
+        "MaleGender",
+        "MultipleLines",
+        "OnlineSecurity",
+        "OnlineBackup",
+        "DeviceProtection",
+        "TechSupport",
+        "StreamingTV",
+        "StreamingMovies",
+        "Partner",
+        "Dependents",
+        "PhoneService",
+        "PaperlessBilling",
+        "SeniorCitizen",
+        "InternetService",
+        "Contract",
+        "PaymentMethod",
+    ]
     config.target = "Churn"
     config.catalog_name = "test_catalog"
     config.schema_name = "test_schema"
@@ -93,7 +119,20 @@ class TestDataProcessor:
             assert pd.api.types.is_numeric_dtype(processor.df[col])
 
         # Check flag columns
-        binary_cols = ['Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+        binary_cols = [
+            "Partner",
+            "Dependents",
+            "PhoneService",
+            "MultipleLines",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
+            "PaperlessBilling",
+            "Churn",
+        ]
 
         for col in binary_cols:
             assert set(processor.df[col].unique()).issubset({0, 1})

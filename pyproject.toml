@@ -87,3 +87,8 @@ lint.ignore = [
 [tool.ruff.format]
 indent-style = "space"
 docstring-code-format = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.2.0",
+]

@@ -7,11 +7,10 @@ from databricks.sdk.service.catalog import (
     MonitorInferenceLogProblemType,
 )
 from loguru import logger
+from marvel_characters.config import ProjectConfig
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import ArrayType, DoubleType, IntegerType, StringType, StructField, StructType
-
-from marvel_characters.config import ProjectConfig
 
 
 def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, workspace: WorkspaceClient) -> None:
@@ -60,7 +59,7 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
                             StructField("PaymentMethod", StringType(), True),
                             StructField("MonthlyCharges", DoubleType(), True),
                             StructField("TotalCharges", DoubleType(), True),
-                            StructField("Churn", StringType(), True)
+                            StructField("Churn", StringType(), True),
                         ]
                     )
                 ),
@@ -122,17 +121,16 @@ def create_or_refresh_monitoring(config: ProjectConfig, spark: SparkSession, wor
     # Log counts at each step to diagnose where data might be getting filtered out
     logger.info(f"Records in df_final: {df_final.count()}")
 
-    df_final_with_status = df_final \
-        .withColumn("raw_prediction", F.col("parsed_response.predictions")[0]) \
-        .withColumn("churn_probability", F.col("parsed_response.predictions")[0][1].cast("double")) \
+    df_final_with_status = (
+        df_final.withColumn("raw_prediction", F.col("parsed_response.predictions")[0])
+        .withColumn("churn_probability", F.col("parsed_response.predictions")[0][1].cast("double"))
         .withColumn(
             "prediction",
-            F.when(F.col("churn_probability").isNotNull(),
-                (F.col("churn_probability") > 0.5).cast("int")
-            ).otherwise(
+            F.when(F.col("churn_probability").isNotNull(), (F.col("churn_probability") > 0.5).cast("int")).otherwise(
                 F.col("raw_prediction").cast("int")
-            )
+            ),
         )
+    )
 
     # Make dropna optional if we're losing all data
     df_with_valid_values = df_final_with_status.dropna(subset=["prediction"])

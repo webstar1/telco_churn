@@ -10,15 +10,12 @@ catalog_name, schema_name → Database schema names for Databricks tables.
 """
 
 import mlflow
-import pandas as pd
 from delta.tables import DeltaTable
-from sklearn.ensemble import RandomForestClassifier
 from loguru import logger
 from mlflow import MlflowClient
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from telco_churn.config import ProjectConfig, Tags
@@ -75,13 +72,10 @@ class BasicModel:
         logger.info("✅ Data successfully loaded.")
 
     def prepare_features(self) -> None:
-        """Constructs a pipeline combining preprocessing and random forest classification model.
-        """
+        """Constructs a pipeline combining preprocessing and random forest classification model."""
         logger.info("🔄 Defining preprocessing pipeline...")
 
-        self.pipeline = Pipeline(
-            steps=[("model", RandomForestClassifier(**self.parameters))]
-        )
+        self.pipeline = Pipeline(steps=[("model", RandomForestClassifier(**self.parameters))])
         logger.info("✅ Preprocessing pipeline defined.")
 
     def train(self) -> None:
@@ -96,8 +90,7 @@ class BasicModel:
             self.run_id = run.info.run_id
 
             signature = infer_signature(
-                model_input=self.X_train,
-                model_output=self.pipeline.predict_proba(self.X_train)
+                model_input=self.X_train, model_output=self.pipeline.predict_proba(self.X_train)
             )
 
             mlflow.log_input(
@@ -106,7 +99,7 @@ class BasicModel:
                     table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
                     version=self.train_data_version,
                 ),
-                context="training"
+                context="training",
             )
 
             self.model_info = mlflow.sklearn.log_model(
@@ -120,9 +113,7 @@ class BasicModel:
             from sklearn.metrics import f1_score
 
             preds = self.pipeline.predict(self.X_test)
-            self.metrics = {
-                "f1_score": f1_score(self.y_test, preds)
-            }
+            self.metrics = {"f1_score": f1_score(self.y_test, preds)}
 
     def model_improved(self) -> bool:
         """Evaluate the model performance on the test set.
