@@ -21,16 +21,26 @@ def sample_data() -> pd.DataFrame:
     """Create a sample DataFrame for testing."""
     return pd.DataFrame(
         {
-            "customerID": ["1", "2", "3", "4", "5"],
-            "gender": ["Male", "Female", "Male", "Female", "Male"],
-            "SeniorCitizen": [0, 1, 0, 0, 1],
-            "Partner": ["Yes", "No", "Yes", "No", "Yes"],
-            "Dependents": ["No", "No", "Yes", "No", "Yes"],
-            "tenure": [12, 24, 36, 6, 48],
-            "MonthlyCharges": [70.5, 55.0, 100.2, 45.8, 80.0],
-            "TotalCharges": [846.0, 1320.0, 3607.2, 274.8, 3840.0],
-            "Contract": ["Month-to-month", "One year", "Two year", "Month-to-month", "Two year"],
-            "Churn": ["Yes", "No", "No", "Yes", "No"]
+            "gender": ["Female", "Male", "Male", "Male", "Female"],
+            "SeniorCitizen": [0, 0, 0, 0, 0],
+            "Partner": ["Yes", "No", "No", "No", "No"],
+            "Dependents": ["No", "No", "No", "No", "No"],
+            "tenure": [1, 34, 2, 45, 2],
+            "PhoneService": ["No", "Yes", "Yes", "No", "Yes"],
+            "MultipleLines": ["No phone service","No","No","No phone service","No"],
+            "InternetService": ["DSL", "DSL", "DSL", "DSL", "Fiber optic"],
+            "OnlineSecurity": ["No", "Yes", "Yes", "Yes", "No"],
+            "OnlineBackup": ["Yes", "No", "Yes", "No", "No"],
+            "DeviceProtection": ["No", "Yes", "No", "Yes", "No"],
+            "TechSupport": ["No", "No", "No", "Yes", "No"],
+            "StreamingTV": ["No", "No", "No", "No", "No"],
+            "StreamingMovies": ["No", "No", "No", "No", "No"],
+            "Contract": ["Month-to-month","One year","Month-to-month","One year","Month-to-month"],
+            "PaperlessBilling": ["Yes", "No", "Yes", "No", "Yes"],
+            "PaymentMethod": ["Electronic check","Mailed check","Mailed check","Bank transfer (automatic)","Electronic check"],
+            "MonthlyCharges": [29.85, 56.95, 53.85, 42.30, 70.70],
+            "TotalCharges": [29.85, 1889.50, 108.15, 1840.75, 151.65],
+            "Churn": ["No", "No", "Yes", "No", "Yes"]
         }
     )
 
@@ -39,7 +49,7 @@ def sample_data() -> pd.DataFrame:
 def mock_config() -> MagicMock:
     """Create a mock ProjectConfig for testing."""
     config = MagicMock(spec=ProjectConfig)
-    config.num_features = ["MaleGender","Partner","Dependents","PhoneService","MultipleLines","OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport","StreamingTV","StreamingMovies","PaperlessBilling","SeniorCitizen","Tenure","MonthlyCharges","TotalCharges","Contract","PaymentMethod","InternetService"]
+    config.num_features = ["Tenure","MonthlyCharges","TotalCharges","MaleGender","MultipleLines","OnlineSecurity","OnlineBackup","DeviceProtection","TechSupport","StreamingTV","StreamingMovies","Partner","Dependents","PhoneService","PaperlessBilling","SeniorCitizen","InternetService","Contract","PaymentMethod"]
     config.target = "Churn"
     config.catalog_name = "test_catalog"
     config.schema_name = "test_schema"
