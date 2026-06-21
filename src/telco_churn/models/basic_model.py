@@ -10,15 +10,12 @@ catalog_name, schema_name → Database schema names for Databricks tables.
 """
 
 import mlflow
-import pandas as pd
 from delta.tables import DeltaTable
-from sklearn.ensemble import RandomForestClassifier
 from loguru import logger
 from mlflow import MlflowClient
 from mlflow.models import infer_signature
 from pyspark.sql import SparkSession
-from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.compose import ColumnTransformer
+from sklearn.ensemble import RandomForestClassifier
 from sklearn.pipeline import Pipeline
 
 from telco_churn.config import ProjectConfig, Tags
@@ -68,20 +65,21 @@ class BasicModel:
         self.y_test = self.test_set[self.target]
         self.eval_data = self.test_set[self.num_features + [self.target]]
 
-        train_delta_table = DeltaTable.forName(self.spark, f"{self.catalog_name}.{self.schema_name}.train_set")
+        train_delta_table = DeltaTable.forName(
+            self.spark, f"{self.catalog_name}.{self.schema_name}.train_set"
+        )
         self.train_data_version = str(train_delta_table.history().select("version").first()[0])
-        test_delta_table = DeltaTable.forName(self.spark, f"{self.catalog_name}.{self.schema_name}.test_set")
+        test_delta_table = DeltaTable.forName(
+            self.spark, f"{self.catalog_name}.{self.schema_name}.test_set"
+        )
         self.test_data_version = str(test_delta_table.history().select("version").first()[0])
         logger.info("✅ Data successfully loaded.")
 
     def prepare_features(self) -> None:
-        """Constructs a pipeline combining preprocessing and random forest classification model.
-        """
+        """Constructs a pipeline combining preprocessing and random forest classification model."""
         logger.info("🔄 Defining preprocessing pipeline...")
 
-        self.pipeline = Pipeline(
-            steps=[("model", RandomForestClassifier(**self.parameters))]
-        )
+        self.pipeline = Pipeline(steps=[("model", RandomForestClassifier(**self.parameters))])
         logger.info("✅ Preprocessing pipeline defined.")
 
     def train(self) -> None:
@@ -96,8 +94,7 @@ class BasicModel:
             self.run_id = run.info.run_id
 
             signature = infer_signature(
-                model_input=self.X_train,
-                model_output=self.pipeline.predict_proba(self.X_train)
+                model_input=self.X_train, model_output=self.pipeline.predict_proba(self.X_train)
             )
 
             mlflow.log_input(
@@ -106,7 +103,7 @@ class BasicModel:
                     table_name=f"{self.catalog_name}.{self.schema_name}.train_set",
                     version=self.train_data_version,
                 ),
-                context="training"
+                context="training",
             )
 
             self.model_info = mlflow.sklearn.log_model(
@@ -120,9 +117,7 @@ class BasicModel:
             from sklearn.metrics import f1_score
 
             preds = self.pipeline.predict(self.X_test)
-            self.metrics = {
-                "f1": f1_score(self.y_test, preds)
-            }
+            self.metrics = {"f1_score": f1_score(self.y_test, preds)}
 
     def model_improved(self) -> bool:
         """Evaluate the model performance on the test set.
@@ -132,7 +127,9 @@ class BasicModel:
         """
         client = MlflowClient()
         try:
-            latest_model_version = client.get_model_version_by_alias(name=self.model_name, alias="latest-model")
+            latest_model_version = client.get_model_version_by_alias(
+                name=self.model_name, alias="latest-model"
+            )
             latest_model_uri = f"models:/{latest_model_version.model_id}"
 
             result = mlflow.models.evaluate(
@@ -150,7 +147,9 @@ class BasicModel:
                 logger.info("Current model does not improve over latest. Returning False.")
                 return False
         except Exception as e:
-            logger.info(f"No previous model found or evaluation failed: {e}. Treating as first run.")
+            logger.info(
+                f"No previous model found or evaluation failed: {e}. Treating as first run."
+            )
             return True
 
     def register_model(self) -> None:

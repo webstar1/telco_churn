@@ -1,7 +1,5 @@
 """Data preprocessing module for Telco Churn."""
 
-import time
-
 import numpy as np
 import pandas as pd
 from pyspark.sql import SparkSession
@@ -28,98 +26,82 @@ class DataProcessor:
 
         This method handles missing values, converts data types, and performs feature engineering.
         """
-        cat_features = self.config.cat_features
-        num_features = self.config.num_features
-        target = self.config.target
 
         self.df.rename(columns={"gender": "MaleGender"}, inplace=True)
         self.df.rename(columns={"tenure": "Tenure"}, inplace=True)
 
-        # Multiple Lines
-        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No", 0)
-        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No phone service", 0)
-        self.df["MultipleLines"] = self.df["MultipleLines"].replace("Yes", 1)
-
-        # Teams
-        self.df["Teams"] = self.df["Teams"].notna().astype("int")
-
-        # Origin
-        self.df["Origin"] = self.df["Origin"].fillna("Unknown")
-
-        # Identity
-        self.df["Identity"] = self.df["Identity"].fillna("Unknown")
-        self.df = self.df[self.df["Identity"].isin(["Public", "Secret", "Unknown"])]
+        # Total Charges
+        contract_map = {"One year": 12, "Two year": 24}
+        self.df["TotalCharges"] = self.df["TotalCharges"].replace(" ", np.nan)
+        self.df["TotalCharges"] = self.df["TotalCharges"].astype(float)
+        self.df["TotalCharges"] = self.df["TotalCharges"].fillna(
+            self.df["MonthlyCharges"] * self.df["Contract"].map(contract_map)
+        )
 
         # Gender
-        self.df['MaleGender'] = self.df['MaleGender'].map({'Male': 1, 'Female': 0})
+        self.df["MaleGender"] = self.df["MaleGender"].map({"Male": 1, "Female": 0})
 
         # Multiple Lines
-        self.df['MultipleLines'] = self.df['MultipleLines'].replace('No phone service', 'No')
+        self.df["MultipleLines"] = self.df["MultipleLines"].replace("No phone service", "No")
 
         # Convert internet columns to flag columns
         internet_cols = [
-            'OnlineSecurity',
-            'OnlineBackup',
-            'DeviceProtection',
-            'TechSupport',
-            'StreamingTV',
-            'StreamingMovies'
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
         ]
 
-        self.df[internet_cols] = self.df[internet_cols].replace('No internet service', 'No')
+        self.df[internet_cols] = self.df[internet_cols].replace("No internet service", "No")
 
         # Convert flag columns to numeric
-        binary_cols = ['Partner', 'Dependents', 'PhoneService', 'MultipleLines', 'OnlineSecurity', 'OnlineBackup', 'DeviceProtection', 'TechSupport', 'StreamingTV', 'StreamingMovies', 'PaperlessBilling', 'Churn']
+        binary_cols = [
+            "Partner",
+            "Dependents",
+            "PhoneService",
+            "MultipleLines",
+            "OnlineSecurity",
+            "OnlineBackup",
+            "DeviceProtection",
+            "TechSupport",
+            "StreamingTV",
+            "StreamingMovies",
+            "PaperlessBilling",
+            "Churn",
+        ]
 
         for col in binary_cols:
-            self.df[col] = self.df[col].map({'Yes': 1, 'No': 0})
+            self.df[col] = self.df[col].map({"Yes": 1, "No": 0})
 
-    def split_data(self, test_size: float = 0.2, random_state: int = 42) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def split_data(
+        self, test_size: float = 0.2, random_state: int = 42
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         """Split the DataFrame (self.df) into training and test sets.
 
         :param test_size: The proportion of the dataset to include in the test split.
         :param random_state: Controls the shuffling applied to the data before applying the split.
         :return: A tuple containing the training and test DataFrames.
         """
-        train_set, test_set = train_test_split(self.df, test_size=test_size, random_state=random_state)
+        train_set, test_set = train_test_split(
+            self.df, test_size=test_size, random_state=random_state
+        )
         return train_set, test_set
 
     def fit_target_encoding(self, train_df) -> None:
-
-        target_encode_cols = [
-            'InternetService',
-            'Contract',
-            'PaymentMethod'
-        ]
+        target_encode_cols = ["InternetService", "Contract", "PaymentMethod"]
 
         for col in target_encode_cols:
+            self.target_encodings[col] = train_df.groupby(col)["Churn"].mean().to_dict()
 
-            self.target_encodings[col] = (
-                train_df.groupby(col)['Churn']
-                .mean()
-                .to_dict()
-            )
-
-
-    def apply_target_encoding(self,train_df,test_df):
-
-        target_encode_cols = [
-            'InternetService',
-            'Contract',
-            'PaymentMethod'
-        ]
+    def apply_target_encoding(self, train_df, test_df):
+        target_encode_cols = ["InternetService", "Contract", "PaymentMethod"]
 
         for col in target_encode_cols:
+            train_df[col] = train_df[col].map(self.target_encodings[col])
 
-            train_df[col] = (
-                train_df[col]
-                .map(self.target_encodings[col])
-            )
-
-            test_df[col] = (
-                test_df[col]
-                .map(self.target_encodings[col])
-            )
+            test_df[col] = test_df[col].map(self.target_encodings[col])
 
         return train_df, test_df
 
@@ -137,13 +119,13 @@ class DataProcessor:
             "update_timestamp_utc", to_utc_timestamp(current_timestamp(), "UTC")
         )
 
-        train_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-            f"{self.config.catalog_name}.{self.config.schema_name}.train_set"
-        )
+        train_set_with_timestamp.write.mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(f"{self.config.catalog_name}.{self.config.schema_name}.train_set")
 
-        test_set_with_timestamp.write.mode("overwrite").option("overwriteSchema", "true").saveAsTable(
-            f"{self.config.catalog_name}.{self.config.schema_name}.test_set"
-        )
+        test_set_with_timestamp.write.mode("overwrite").option(
+            "overwriteSchema", "true"
+        ).saveAsTable(f"{self.config.catalog_name}.{self.config.schema_name}.test_set")
 
     def enable_change_data_feed(self) -> None:
         """Enable Change Data Feed for train and test set tables.
