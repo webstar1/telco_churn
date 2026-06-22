@@ -10,6 +10,9 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    concurrency:
+      group: databricks-deploy-${{ matrix.environment }}
+      cancel-in-progress: false
     strategy:
       matrix:
         environment: [acc, prd]
