@@ -78,9 +78,6 @@ def mock_config() -> MagicMock:
         "PhoneService",
         "PaperlessBilling",
         "SeniorCitizen",
-        "InternetService",
-        "Contract",
-        "PaymentMethod",
     ]
     config.target = "Churn"
     config.catalog_name = "test_catalog"
