@@ -119,7 +119,7 @@ class TestDataProcessor:
 
         # Check column renames
         assert "gender" not in processor.df.columns
-        assert "tenure" in processor.df.columns
+        assert "Tenure" in processor.df.columns
 
         # Check missing value handling
         assert not processor.df["TotalCharges"].isna().any()
