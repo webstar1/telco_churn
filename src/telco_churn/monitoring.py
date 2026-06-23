@@ -7,7 +7,7 @@ from databricks.sdk.service.catalog import (
     MonitorInferenceLogProblemType,
 )
 from loguru import logger
-from marvel_characters.config import ProjectConfig
+from telco_churn.config import ProjectConfig
 from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import (
@@ -212,7 +212,7 @@ def create_or_refresh_monitoring(
 def create_monitoring_table(
     config: ProjectConfig, spark: SparkSession, workspace: WorkspaceClient
 ) -> None:
-    """Create a new monitoring table for Marvel character model monitoring.
+    """Create a new monitoring table for Telco Churn model monitoring.
 
     This function sets up a monitoring table using the provided configuration,
     SparkSession, and workspace. It also enables Change Data Feed for the table.

@@ -16,6 +16,7 @@ Requires-Dist: databricks-sdk==0.55.0
 Requires-Dist: pydantic==2.11.7
 Requires-Dist: loguru==0.7.3
 Requires-Dist: python-dotenv==1.1.1
+Requires-Dist: pyspark>=3.5.6
 Provides-Extra: dev
 Requires-Dist: databricks-connect<17,>=16.0; extra == "dev"
 Requires-Dist: ipykernel<7,>=6.29.5; extra == "dev"
