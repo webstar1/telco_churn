@@ -11,6 +11,7 @@ databricks-sdk==0.55.0
 pydantic==2.11.7
 loguru==0.7.3
 python-dotenv==1.1.1
+pyspark>=3.5.6
 
 [dev]
 databricks-connect<17,>=16.0
